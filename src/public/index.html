@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business Contact Finder</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+    .search-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    input, button {
+      padding: 12px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+    input {
+      flex: 1;
+      min-width: 200px;
+    }
+    button {
+      background-color: #4285F4;
+      color: white;
+      cursor: pointer;
+      border: none;
+      padding: 12px 24px;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #3367D6;
+    }
+    .results-container {
+      margin-top: 20px;
+    }
+    .business-list {
+      list-style: none;
+      padding: 0;
+    }
+    .business-item {
+      padding: 15px;
+      border: 1px solid #eee;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .business-item:hover {
+      background-color: #f9f9f9;
+    }
+    .business-details {
+      margin-top: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+      display: none;
+    }
+    .business-details h3 {
+      margin-top: 0;
+      color: #4285F4;
+    }
+    .contact-info {
+      margin-top: 15px;
+    }
+    .contact-info p {
+      margin: 8px 0;
+    }
+    .loading {
+      text-align: center;
+      margin: 20px 0;
+      font-style: italic;
+      color: #666;
+      display: none;
+    }
+    .nav-links {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .nav-links a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #4285F4;
+    }
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav-links">
+      <a href="/" class="active">Individual Business Search</a> | 
+      <a href="/categories">Category-Based Extraction</a>
+    </div>
+
+    <h1>Business Contact Finder</h1>
+    
+    <div class="search-form">
+      <input type="text" id="business-type" placeholder="Type of business (e.g., restaurant, plumber)" required>
+      <input type="text" id="location" placeholder="Location (e.g., Dehradun)" value="Dehradun" required>
+      <button id="search-btn">Search</button>
+    </div>
+    
+    <div class="loading" id="loading">Searching...</div>
+    
+    <div class="results-container">
+      <ul class="business-list" id="business-list"></ul>
+    </div>
+    
+    <div class="business-details" id="business-details">
+      <h3 id="business-name"></h3>
+      <div class="contact-info">
+        <p id="business-address"></p>
+        <p><strong>Phone:</strong> <span id="business-phone"></span></p>
+        <p id="business-website-container"><strong>Website:</strong> <a id="business-website" target="_blank" rel="noopener"></a></p>
+        <p id="business-maps-container"><strong>Google Maps:</strong> <a id="business-maps" target="_blank" rel="noopener">View on Google Maps</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const businessTypeInput = document.getElementById('business-type');
+      const locationInput = document.getElementById('location');
+      const searchBtn = document.getElementById('search-btn');
+      const businessList = document.getElementById('business-list');
+      const businessDetails = document.getElementById('business-details');
+      const businessName = document.getElementById('business-name');
+      const businessAddress = document.getElementById('business-address');
+      const businessPhone = document.getElementById('business-phone');
+      const businessWebsite = document.getElementById('business-website');
+      const businessWebsiteContainer = document.getElementById('business-website-container');
+      const businessMaps = document.getElementById('business-maps');
+      const loading = document.getElementById('loading');
+
+      // Search for businesses
+      searchBtn.addEventListener('click', async () => {
+        const businessType = businessTypeInput.value.trim();
+        const location = locationInput.value.trim();
+        
+        if (!businessType || !location) {
+          alert('Please enter both business type and location');
+          return;
+        }
+        
+        // Clear previous results
+        businessList.innerHTML = '';
+        businessDetails.style.display = 'none';
+        loading.style.display = 'block';
+        
+        try {
+          const response = await fetch(`/api/search?query=${encodeURIComponent(businessType)}&location=${encodeURIComponent(location)}`);
+          const data = await response.json();
+          
+          if (data.results && data.results.length > 0) {
+            // Display business list
+            data.results.forEach(business => {
+              const li = document.createElement('li');
+              li.className = 'business-item';
+              li.textContent = business.name;
+              li.dataset.placeId = business.place_id;
+              li.addEventListener('click', () => getBusinessDetails(business.place_id));
+              businessList.appendChild(li);
+            });
+          } else {
+            businessList.innerHTML = '<li>No businesses found. Try a different search.</li>';
+          }
+        } catch (error) {
+          console.error('Error searching for businesses:', error);
+          businessList.innerHTML = '<li>Error searching for businesses. Please try again.</li>';
+        } finally {
+          loading.style.display = 'none';
+        }
+      });
+
+      // Get business details
+      async function getBusinessDetails(placeId) {
+        businessDetails.style.display = 'none';
+        loading.style.display = 'block';
+        
+        try {
+          const response = await fetch(`/api/details/${placeId}`);
+          const data = await response.json();
+          
+          if (data.details) {
+            const details = data.details;
+            
+            // Display business details
+            businessName.textContent = details.name || 'N/A';
+            businessAddress.textContent = details.formatted_address || 'Address not available';
+            businessPhone.textContent = details.formatted_phone_number || 'Phone number not available';
+            
+            if (details.website) {
+              businessWebsite.textContent = details.website;
+              businessWebsite.href = details.website;
+              businessWebsiteContainer.style.display = 'block';
+            } else {
+              businessWebsiteContainer.style.display = 'none';
+            }
+            
+            if (details.url) {
+              businessMaps.href = details.url;
+              document.getElementById('business-maps-container').style.display = 'block';
+            } else {
+              document.getElementById('business-maps-container').style.display = 'none';
+            }
+            
+            businessDetails.style.display = 'block';
+          } else {
+            alert('Could not retrieve business details');
+          }
+        } catch (error) {
+          console.error('Error fetching business details:', error);
+          alert('Error fetching business details. Please try again.');
+        } finally {
+          loading.style.display = 'none';
+        }
+      }
+    });
+  </script>
+</body>
+</html> 

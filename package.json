@@ -1,0 +1,31 @@
+{
+  "name": "google-maps-business-finder",
+  "version": "1.0.0",
+  "description": "A web application to search for businesses and retrieve their contact information using Google Maps API",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "google-maps",
+    "places-api",
+    "business-search",
+    "contact-finder"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@googlemaps/google-maps-services-js": "^3.3.16",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.3",
+    "pdfkit": "^0.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

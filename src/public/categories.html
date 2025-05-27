@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Category-Based Business Extractor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+    .search-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    input, button, textarea, select {
+      padding: 12px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+    input, textarea, select {
+      flex: 1;
+    }
+    textarea {
+      min-height: 100px;
+      font-family: Arial, sans-serif;
+    }
+    button {
+      background-color: #4285F4;
+      color: white;
+      cursor: pointer;
+      border: none;
+      padding: 12px 24px;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #3367D6;
+    }
+    .loading {
+      text-align: center;
+      margin: 20px 0;
+      font-style: italic;
+      color: #666;
+      display: none;
+    }
+    .results-container {
+      margin-top: 20px;
+    }
+    .category-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .category-section h2 {
+      margin-top: 0;
+      color: #4285F4;
+      font-size: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .category-count {
+      font-size: 16px;
+      color: #666;
+      font-weight: normal;
+    }
+    .business-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      table-layout: fixed;
+    }
+    .business-table th, .business-table td {
+      padding: 10px;
+      border: 1px solid #eee;
+      text-align: left;
+      word-wrap: break-word;
+    }
+    .business-table th {
+      background-color: #f5f5f5;
+      font-weight: bold;
+    }
+    .business-table tr:hover {
+      background-color: #f9f9f9;
+    }
+    .export-buttons {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .export-buttons button {
+      margin: 0 10px;
+    }
+    .nav-links {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .nav-links a {
+      margin: 0 10px;
+      text-decoration: none;
+      color: #4285F4;
+    }
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+    .help-text {
+      font-size: 14px;
+      color: #666;
+      margin-top: 5px;
+    }
+    .tag {
+      display: inline-block;
+      background-color: #f1f1f1;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+    .tag-container {
+      max-width: 200px;
+    }
+    .status-OPERATIONAL {
+      color: green;
+      font-weight: bold;
+    }
+    .status-CLOSED_TEMPORARILY {
+      color: orange;
+      font-weight: bold;
+    }
+    .status-CLOSED_PERMANENTLY {
+      color: red;
+      font-weight: bold;
+    }
+    .search-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .search-options > div {
+      flex: 1;
+      min-width: 250px;
+    }
+    .option-label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+    }
+    .preset-categories {
+      margin-top: 10px;
+    }
+    .preset-btn {
+      background-color: #f1f1f1;
+      color: #333;
+      border: 1px solid #ddd;
+      padding: 5px 10px;
+      margin-right: 5px;
+      margin-bottom: 5px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .preset-btn:hover {
+      background-color: #e5e5e5;
+    }
+    .total-count {
+      text-align: center;
+      font-size: 18px;
+      margin: 20px 0;
+      color: #333;
+    }
+    .search-status {
+      font-size: 14px;
+      color: #666;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="nav-links">
+      <a href="/">Individual Business Search</a> | 
+      <a href="/categories" class="active">Category-Based Extraction</a>
+    </div>
+
+    <h1>Industry-Based Business Extractor</h1>
+    
+    <div class="search-form">
+      <div class="search-options">
+        <div>
+          <label class="option-label" for="location">Location:</label>
+          <input type="text" id="location" placeholder="Enter location (e.g., Dehradun)" value="Dehradun" required>
+          <p class="help-text">Enter the city or area where you want to search for businesses.</p>
+        </div>
+        
+        <div>
+          <label class="option-label" for="categories">Business Categories:</label>
+          <textarea id="categories" placeholder="Enter categories, one per line or comma-separated" required>travel
+hotel
+restaurant
+cafe
+real estate
+clothing
+ecommerce</textarea>
+          <div class="preset-categories">
+            <button class="preset-btn" data-category="travel">Travel</button>
+            <button class="preset-btn" data-category="hotel">Hotels</button>
+            <button class="preset-btn" data-category="restaurant">Restaurants</button>
+            <button class="preset-btn" data-category="cafe">Cafes</button>
+            <button class="preset-btn" data-category="grocery">Grocery</button>
+            <button class="preset-btn" data-category="real estate">Real Estate</button>
+            <button class="preset-btn" data-category="clothing">Clothing</button>
+            <button class="preset-btn" data-category="ecommerce">E-commerce</button>
+          </div>
+          <p class="help-text">Our system will expand each category to find more businesses in that industry.</p>
+        </div>
+      </div>
+      
+      <button id="extract-btn">Extract Businesses</button>
+      <div class="search-status" id="search-status">Searching: <span id="current-search-term"></span></div>
+    </div>
+    
+    <div class="loading" id="loading">Extracting businesses by industry. This may take a few minutes due to comprehensive searching...</div>
+    
+    <div class="total-count" id="total-count" style="display: none;">Total businesses found: <span id="total-businesses">0</span></div>
+    
+    <div class="results-container" id="results-container"></div>
+    
+    <div class="export-buttons" style="display: none;" id="export-buttons">
+      <button id="export-csv">Export to CSV</button>
+      <button id="export-json">Export to JSON</button>
+      <button id="generate-pdf">Generate PDF Report</button>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const locationInput = document.getElementById('location');
+      const categoriesInput = document.getElementById('categories');
+      const extractBtn = document.getElementById('extract-btn');
+      const resultsContainer = document.getElementById('results-container');
+      const loading = document.getElementById('loading');
+      const searchStatus = document.getElementById('search-status');
+      const currentSearchTerm = document.getElementById('current-search-term');
+      const exportButtons = document.getElementById('export-buttons');
+      const exportCsvBtn = document.getElementById('export-csv');
+      const exportJsonBtn = document.getElementById('export-json');
+      const totalCount = document.getElementById('total-count');
+      const totalBusinesses = document.getElementById('total-businesses');
+      const presetButtons = document.querySelectorAll('.preset-btn');
+      
+      let extractedData = null;
+
+      // Handle preset category buttons
+      presetButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const category = button.dataset.category;
+          const currentText = categoriesInput.value.trim();
+          
+          // Check if category is already in the textarea
+          if (!currentText.split(/[\n,]+/).map(c => c.trim().toLowerCase()).includes(category.toLowerCase())) {
+            categoriesInput.value = currentText ? `${currentText}\n${category}` : category;
+          }
+        });
+      });
+
+      // Extract businesses by categories
+      extractBtn.addEventListener('click', async () => {
+        const location = locationInput.value.trim();
+        const categories = categoriesInput.value.trim();
+        
+        if (!location || !categories) {
+          alert('Please enter both location and at least one category');
+          return;
+        }
+        
+        // Format categories (replace newlines with commas)
+        const formattedCategories = categories.split(/[\n,]+/).map(cat => cat.trim()).filter(cat => cat).join(',');
+        
+        // Clear previous results
+        resultsContainer.innerHTML = '';
+        exportButtons.style.display = 'none';
+        totalCount.style.display = 'none';
+        loading.style.display = 'block';
+        extractBtn.disabled = true;
+        extractBtn.textContent = 'Searching...';
+        
+        try {
+          const response = await fetch(`/api/extract-categories?location=${encodeURIComponent(location)}&categories=${encodeURIComponent(formattedCategories)}`);
+          const data = await response.json();
+          
+          if (data.categories) {
+            extractedData = data;
+            displayResults(data);
+            exportButtons.style.display = 'block';
+            
+            // Count total businesses
+            let total = 0;
+            Object.values(data.categories).forEach(businesses => {
+              if (Array.isArray(businesses)) {
+                total += businesses.length;
+              }
+            });
+            
+            totalBusinesses.textContent = total;
+            totalCount.style.display = 'block';
+          } else {
+            resultsContainer.innerHTML = '<p>No businesses found. Try different categories or location.</p>';
+          }
+        } catch (error) {
+          console.error('Error extracting businesses:', error);
+          resultsContainer.innerHTML = '<p>Error extracting businesses. Please try again.</p>';
+        } finally {
+          loading.style.display = 'none';
+          extractBtn.disabled = false;
+          extractBtn.textContent = 'Extract Businesses';
+        }
+      });
+
+      // Display results grouped by category
+      function displayResults(data) {
+        const categories = data.categories;
+        const location = data.location;
+        
+        for (const [category, businesses] of Object.entries(categories)) {
+          const categorySection = document.createElement('div');
+          categorySection.className = 'category-section';
+          
+          const categoryTitle = document.createElement('h2');
+          
+          if (Array.isArray(businesses)) {
+            categoryTitle.innerHTML = `${category} in ${location} <span class="category-count">(${businesses.length} businesses found)</span>`;
+          } else {
+            categoryTitle.textContent = `${category} in ${location}`;
+          }
+          
+          categorySection.appendChild(categoryTitle);
+          
+          if (Array.isArray(businesses) && businesses.length > 0) {
+            const table = document.createElement('table');
+            table.className = 'business-table';
+            
+            // Create table header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            ['Business Name', 'Phone Number', 'Address', 'City/State', 'Website', 'Status', 'Types', 'Rating', 'Reviews'].forEach(headerText => {
+              const th = document.createElement('th');
+              th.textContent = headerText;
+              headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Create table body
+            const tbody = document.createElement('tbody');
+            businesses.forEach(business => {
+              const row = document.createElement('tr');
+              
+              // Business name
+              const nameCell = document.createElement('td');
+              nameCell.textContent = business.name;
+              row.appendChild(nameCell);
+              
+              // Phone number
+              const phoneCell = document.createElement('td');
+              phoneCell.textContent = business.phone || 'N/A';
+              row.appendChild(phoneCell);
+              
+              // Address
+              const addressCell = document.createElement('td');
+              addressCell.textContent = business.address;
+              row.appendChild(addressCell);
+              
+              // City/State
+              const locationCell = document.createElement('td');
+              const cityState = [];
+              if (business.city && business.city !== 'N/A') cityState.push(business.city);
+              if (business.state && business.state !== 'N/A') cityState.push(business.state);
+              locationCell.textContent = cityState.length > 0 ? cityState.join(', ') : 'N/A';
+              row.appendChild(locationCell);
+              
+              // Website
+              const websiteCell = document.createElement('td');
+              if (business.website && business.website !== 'N/A') {
+                const websiteLink = document.createElement('a');
+                websiteLink.href = business.website;
+                websiteLink.target = '_blank';
+                websiteLink.rel = 'noopener';
+                websiteLink.textContent = 'Visit Website';
+                websiteCell.appendChild(websiteLink);
+              } else {
+                websiteCell.textContent = 'N/A';
+              }
+              row.appendChild(websiteCell);
+              
+              // Business status
+              const statusCell = document.createElement('td');
+              if (business.business_status) {
+                statusCell.textContent = formatBusinessStatus(business.business_status);
+                statusCell.className = `status-${business.business_status}`;
+              } else {
+                statusCell.textContent = 'N/A';
+              }
+              row.appendChild(statusCell);
+              
+              // Business types
+              const typesCell = document.createElement('td');
+              if (business.types && business.types.length > 0) {
+                const tagContainer = document.createElement('div');
+                tagContainer.className = 'tag-container';
+                business.types.slice(0, 3).forEach(type => {
+                  const tag = document.createElement('span');
+                  tag.className = 'tag';
+                  tag.textContent = formatType(type);
+                  tagContainer.appendChild(tag);
+                });
+                typesCell.appendChild(tagContainer);
+              } else {
+                typesCell.textContent = 'N/A';
+              }
+              row.appendChild(typesCell);
+              
+              // Rating
+              const ratingCell = document.createElement('td');
+              ratingCell.textContent = business.rating !== 'N/A' ? `${business.rating} ★` : 'N/A';
+              row.appendChild(ratingCell);
+              
+              // Reviews
+              const reviewsCell = document.createElement('td');
+              reviewsCell.textContent = business.user_ratings_total ? business.user_ratings_total : 'N/A';
+              row.appendChild(reviewsCell);
+              
+              tbody.appendChild(row);
+            });
+            table.appendChild(tbody);
+            categorySection.appendChild(table);
+          } else {
+            const noResults = document.createElement('p');
+            noResults.textContent = 'No businesses found for this category.';
+            categorySection.appendChild(noResults);
+          }
+          
+          resultsContainer.appendChild(categorySection);
+        }
+      }
+
+      // Format business status to be more readable
+      function formatBusinessStatus(status) {
+        switch (status) {
+          case 'OPERATIONAL':
+            return 'Open';
+          case 'CLOSED_TEMPORARILY':
+            return 'Temporarily Closed';
+          case 'CLOSED_PERMANENTLY':
+            return 'Permanently Closed';
+          default:
+            return status.replace(/_/g, ' ').toLowerCase()
+              .replace(/\b\w/g, l => l.toUpperCase());
+        }
+      }
+      
+      // Format type strings to be more readable
+      function formatType(type) {
+        return type.replace(/_/g, ' ').toLowerCase()
+          .replace(/\b\w/g, l => l.toUpperCase());
+      }
+
+      // Export to CSV
+      exportCsvBtn.addEventListener('click', () => {
+        if (!extractedData) return;
+        
+        let csvContent = 'Category,Search Term,Business Name,Phone Number,Address,City,State,Website,Status,Types,Rating,Reviews\n';
+        
+        for (const [category, businesses] of Object.entries(extractedData.categories)) {
+          if (Array.isArray(businesses)) {
+            businesses.forEach(business => {
+              const types = business.types ? business.types.join('; ') : '';
+              const row = [
+                business.category || category,
+                business.search_term || category,
+                `"${business.name.replace(/"/g, '""')}"`,
+                business.phone ? `"${business.phone.replace(/"/g, '""')}"` : 'N/A',
+                `"${business.address.replace(/"/g, '""')}"`,
+                business.city || 'N/A',
+                business.state || 'N/A',
+                business.website && business.website !== 'N/A' ? `"${business.website.replace(/"/g, '""')}"` : 'N/A',
+                business.business_status || 'N/A',
+                `"${types.replace(/"/g, '""')}"`,
+                business.rating || 'N/A',
+                business.user_ratings_total || 'N/A'
+              ];
+              csvContent += row.join(',') + '\n';
+            });
+          }
+        }
+        
+        // Add timestamp to filename
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        downloadFile(`businesses-${extractedData.location}-${timestamp}.csv`, csvContent, 'text/csv');
+      });
+
+      // Export to JSON
+      exportJsonBtn.addEventListener('click', () => {
+        if (!extractedData) return;
+        
+        const jsonContent = JSON.stringify(extractedData, null, 2);
+        downloadFile('businesses.json', jsonContent, 'application/json');
+      });
+
+      // Generate PDF report
+      const generatePdfBtn = document.getElementById('generate-pdf');
+      generatePdfBtn.addEventListener('click', () => {
+        if (!extractedData) return;
+        
+        const location = locationInput.value.trim();
+        const categories = categoriesInput.value.trim();
+        
+        if (!location || !categories) {
+          alert('Please enter both location and at least one category');
+          return;
+        }
+        
+        // Format categories (replace newlines with commas)
+        const formattedCategories = categories.split(/[\n,]+/).map(cat => cat.trim()).filter(cat => cat).join(',');
+        
+        // Show loading indicator
+        loading.style.display = 'block';
+        generatePdfBtn.disabled = true;
+        generatePdfBtn.textContent = 'Generating PDF...';
+        
+        // Open the report in a new tab/window
+        window.open(`/api/generate-report?location=${encodeURIComponent(location)}&categories=${encodeURIComponent(formattedCategories)}`, '_blank');
+        
+        // Reset button after a short delay
+        setTimeout(() => {
+          loading.style.display = 'none';
+          generatePdfBtn.disabled = false;
+          generatePdfBtn.textContent = 'Generate PDF Report';
+        }, 2000);
+      });
+
+      // Helper function to download file
+      function downloadFile(filename, content, contentType) {
+        const blob = new Blob([content], { type: contentType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    });
+  </script>
+</body>
+</html> 
