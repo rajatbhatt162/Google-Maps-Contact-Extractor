@@ -24,9 +24,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Create reports directory if it doesn't exist
-const reportsDir = path.join(__dirname, 'reports');
-if (!fs.existsSync(reportsDir)) {
+// Make the file system operations conditional for serverless environments
+const reportsDir = process.env.VERCEL ? '/tmp/reports' : path.join(__dirname, 'reports');
+if (!process.env.VERCEL && !fs.existsSync(reportsDir)) {
   fs.mkdirSync(reportsDir, { recursive: true });
 }
 
@@ -250,6 +250,14 @@ app.get('/api/generate-report', async (req, res) => {
     return res.status(400).json({ error: 'Location and categories are required' });
   }
 
+  // In serverless environment, return a simpler response
+  if (process.env.VERCEL) {
+    return res.json({
+      message: "PDF generation is not available in serverless deployment. Please use CSV export instead.",
+      suggestion: "Use the CSV export feature which works in all environments."
+    });
+  }
+  
   try {
     // Get the data first (reusing the extract-categories functionality)
     const categoryList = categories.split(',').map(cat => cat.trim());
@@ -452,6 +460,11 @@ app.get('/api/generate-report', async (req, res) => {
     console.error('Error generating report:', error);
     return res.status(500).json({ error: 'Failed to generate business report' });
   }
+});
+
+// Add a health check route
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', environment: process.env.VERCEL ? 'vercel' : 'other' });
 });
 
 // Start the server

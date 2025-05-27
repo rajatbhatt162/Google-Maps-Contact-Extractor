@@ -13,6 +13,14 @@
     }
   ],
   "env": {
-    "GOOGLE_MAPS_API_KEY": "AIzaSyDfY-5yJAj6ee-s_ExRCCvS0wWA6G61hKs"
+    "GOOGLE_MAPS_API_KEY": "AIzaSyDfY-5yJAj6ee-s_ExRCCvS0wWA6G61hKs",
+    "VERCEL": "true",
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "src/index.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
   }
 } 
