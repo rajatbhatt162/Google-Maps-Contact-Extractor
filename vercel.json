@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/index.js"
+    }
+  ],
+  "env": {
+    "GOOGLE_MAPS_API_KEY": "AIzaSyDfY-5yJAj6ee-s_ExRCCvS0wWA6G61hKs"
+  }
+} 
